@@ -250,3 +250,62 @@ a:hover { text-decoration: underline; }
   font-size: 0.82rem; color: var(--text-mute);
 }
 .footer .muted { color: var(--text-dim); }
+
+/* ────────────────────────────────────────────────────────────
+   Mobile responsive — fix navbar / hero / container squeeze
+   on phones (the navbar items were overflowing on <720px).
+   ──────────────────────────────────────────────────────────── */
+
+/* Tablet & medium phones: wrap navbar into two rows. */
+@media (max-width: 720px) {
+  .navbar-inner {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    padding: 10px 14px;
+  }
+  .brand               { flex: 0 0 auto; min-width: 0; }
+  .brand img           { width: 28px; height: 28px; }
+  .brand-word          { font-size: 1rem; }
+  .nav-status {
+    margin-left: auto;
+    font-size: 0.78rem;
+    flex: 0 0 auto;
+  }
+  .nav-links {
+    order: 3;                    /* push nav links to the next row */
+    flex-basis: 100%;
+    justify-content: space-between;
+    gap: 2px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links a {
+    font-size: 0.82rem;
+    padding: 5px 8px;
+    white-space: nowrap;
+  }
+
+  .container       { padding: 16px 14px; }
+  .hero-card       { padding: 18px 18px; }
+  .hero-meta       { gap: 14px 18px; }
+  .stats-grid      { gap: 10px; margin-bottom: 20px; }
+  .stat-card       { padding: 14px 16px; }
+  .stat-value      { font-size: 1.55rem; }
+  .panel-head      { padding: 12px 14px; }
+  .panel-head h2   { font-size: 0.95rem; }
+  .data-table thead th,
+  .data-table tbody td { padding: 10px 10px; }
+  .bbar            { min-width: 160px; }
+}
+
+/* Very small phones (≤480px): tighter still + hide secondary brand word. */
+@media (max-width: 480px) {
+  .brand-sub       { display: none; }
+  .nav-status span:last-child { display: none; }   /* keep only the dot */
+  .nav-status      { gap: 0; }
+  .stat-value      { font-size: 1.35rem; }
+  .hero-card       { padding: 16px 14px; }
+  .container       { padding: 12px 10px; }
+}
