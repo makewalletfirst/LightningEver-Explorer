@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log*
+.git
+.gitignore
+.gitattributes
+.github
+ecosystem.config.js
+.env
+.env.*
+*.log

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>LightningEver Explorer</title>
+
+  <!-- SEO / canonical -->
+  <link rel="canonical" href="https://lightningever.ever-chain.xyz/">
+  <meta name="description" content="LightningEver — BitEver L1 위에서 동작하는 Lightning Network LSP 노드의 공개 탐색기. 노드 정보, 활성 채널, 24시간 결제 통계, 채널별 상세를 실시간 표시합니다.">
+  <meta name="theme-color" content="#11141d">
+
+  <!-- OG / Twitter (카카오톡, 인스타 등 공유 시 썸네일) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="LightningEver Explorer">
+  <meta property="og:title" content="LightningEver Explorer">
+  <meta property="og:description" content="BitEver Lightning LSP 의 공개 탐색기 — 노드, 채널, 결제 통계 실시간">
+  <meta property="og:image" content="https://lightningever.ever-chain.xyz/og-image.png">
+  <meta property="og:image:width" content="1580">
+  <meta property="og:image:height" content="1752">
+  <meta property="og:url" content="https://lightningever.ever-chain.xyz/">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="LightningEver Explorer">
+  <meta name="twitter:description" content="BitEver Lightning LSP 의 공개 탐색기">
+  <meta name="twitter:image" content="https://lightningever.ever-chain.xyz/og-image.png">
+
+  <!-- favicons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/favicon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/favicon-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/favicon-512x512.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- top nav (mempool 톤) -->
+  <header class="navbar">
+    <div class="navbar-inner">
+      <a class="brand" href="/">
+        <img src="/assets/icons/favicon-512x512.png" alt="LightningEver">
+        <span class="brand-word">LightningEver</span>
+        <span class="brand-sub">Explorer</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#node">노드</a>
+        <a href="#stats">통계</a>
+        <a href="#channels">채널</a>
+        <a href="#recent">최근 활동</a>
+      </nav>
+      <div class="nav-status" id="connectionStatus" title="LSP 연결 상태">
+        <span class="dot dot-on"></span>
+        <span>연결됨</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- A. LSP 노드 정보 (hero card) -->
+    <section id="node" class="hero">
+      <div class="hero-card">
+        <div class="hero-row hero-top">
+          <div class="hero-label">LSP node</div>
+          <div class="hero-chain">
+            <span class="chain-pill">BitEver mainnet</span>
+          </div>
+        </div>
+        <div class="hero-id" id="nodeIdLine">— —</div>
+        <div class="hero-row hero-meta">
+          <div class="kv"><span class="k">alias</span><span class="v" id="nodeAlias">—</span></div>
+          <div class="kv"><span class="k">block</span><span class="v num" id="blockHeight">—</span></div>
+          <div class="kv"><span class="k">eclair</span><span class="v" id="eclairVersion">—</span></div>
+          <div class="kv"><span class="k">color</span><span class="v color-chip" id="nodeColor"><span class="swatch"></span>—</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- B. 채널 통계 + C. 24h 결제 통계 (grid) -->
+    <section id="stats" class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">활성 채널</div>
+        <div class="stat-value num" id="channelsActive">—</div>
+        <div class="stat-sub" id="channelsTotal">전체 — 개</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">총 capacity</div>
+        <div class="stat-value num"><span id="capacityValue">—</span> <span class="unit">BEC</span></div>
+        <div class="stat-sub"><span id="capacityValueSat">— ever</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">LSP 측 잔액</div>
+        <div class="stat-value num"><span id="localValue">—</span> <span class="unit">BEC</span></div>
+        <div class="stat-sub">사용자 측 <span id="remoteValue">— BEC</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">24h 결제</div>
+        <div class="stat-value num"><span id="payments24Count">—</span> <span class="unit">tx</span></div>
+        <div class="stat-sub"><span id="payments24Amount">— BEC</span> · fee <span id="payments24Fees">— ever</span></div>
+      </div>
+    </section>
+
+    <!-- D. 채널 목록 표 -->
+    <section id="channels" class="panel">
+      <div class="panel-head">
+        <h2>채널 목록</h2>
+        <div class="panel-meta" id="channelsMeta">—</div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="channelsTable">
+          <thead>
+            <tr>
+              <th>state</th>
+              <th>peer nodeId</th>
+              <th>channelId</th>
+              <th class="num">capacity</th>
+              <th>balance (LSP ↔ user)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5" class="empty">불러오는 중…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- E. 최근 mempool/on-chain LN 관련 활동 -->
+    <section id="recent" class="panel">
+      <div class="panel-head">
+        <h2>최근 채널 활동</h2>
+        <div class="panel-meta">close / negotiating / closed</div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="recentTable">
+          <thead>
+            <tr>
+              <th>state</th>
+              <th>peer nodeId</th>
+              <th>channelId</th>
+              <th>funding tx</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4" class="empty">불러오는 중…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>LightningEver · BitEver L1 위의 Lightning Network LSP</div>
+      <div class="muted">
+        <a href="https://bitever2.ever-chain.xyz" target="_blank" rel="noopener">BitEver Explorer</a>
+        · <span id="lastUpdated">last update —</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <script src="/script.js"></script>
+</body>
+</html>
