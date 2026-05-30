@@ -1,0 +1,51 @@
+# LightningEver Explorer — CI on every push / PR to 260530 or main.
+#
+# The Explorer is a tiny Express app with a vanilla HTML/CSS/JS
+# frontend, so CI is mostly: install prod deps, syntax-check the
+# server, and assert the brand strings survive in the served HTML.
+
+name: LightningEver CI
+
+on:
+  push:
+    branches: [ "260530", "main" ]
+  pull_request:
+    branches: [ "260530", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Verify (Node 22)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install production dependencies
+        run: npm ci --omit=dev --no-audit --no-fund
+
+      - name: Syntax-check the server
+        run: node --check server.js
+
+      - name: Boot the server and hit /api/info (eclair unreachable → 502 is fine)
+        run: |
+          PORT=3009 ECLAIR_URL=http://127.0.0.1:1 ECLAIR_PASSWORD=x \
+            node server.js &
+          SERVER_PID=$!
+          sleep 2
+          # The index page should always render
+          curl -fsS -o /tmp/index.html http://127.0.0.1:3009/
+          grep -q "LightningEver Explorer" /tmp/index.html
+          grep -q "og:image"               /tmp/index.html
+          grep -q "max-width: 720px" \
+            <(curl -fsS http://127.0.0.1:3009/style.css) \
+            || (echo "mobile media query missing"; exit 1)
+          kill $SERVER_PID || true
