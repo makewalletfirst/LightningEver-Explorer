@@ -26,6 +26,49 @@ async function eclair(endpoint, formBody = '') {
   return res.json();
 }
 
+// ── channel normalizer ──────────────────────────────────────────────────────
+// Pulls the fields that callers actually care about out of eclair's deeply-
+// nested channel JSON. Also derives the funding txid from channelId + the
+// output_index encoded in the real SCID (BOLT 2: channelId equals
+// funding_txid with the lower 16 bits XORed against funding_output_index).
+
+/** "BBBxTTTxOOO" → output index, or 0 if SCID isn't in that form. */
+function outputIndexFromScid(scid) {
+  if (typeof scid === 'string' && /^\d+x\d+x\d+$/.test(scid)) {
+    return parseInt(scid.split('x')[2], 10) || 0;
+  }
+  return 0;
+}
+
+/** Recover funding txid from channelId and the funding output index. */
+function fundingTxIdFromChannelId(channelIdHex, outputIndex) {
+  if (typeof channelIdHex !== 'string' || channelIdHex.length !== 64) return null;
+  const last2 = parseInt(channelIdHex.slice(-4), 16) ^ (outputIndex & 0xffff);
+  return channelIdHex.slice(0, -4) + last2.toString(16).padStart(4, '0');
+}
+
+function normalizeChannel(c) {
+  const active0     = c.data?.commitments?.active?.[0] ?? {};
+  const spec        = active0.localCommit?.spec ?? {};
+  const localMsat   = BigInt(spec.toLocal  ?? 0);
+  const remoteMsat  = BigInt(spec.toRemote ?? 0);
+  const realScid    = active0.localFunding?.shortChannelId ?? null;
+  const localAlias  = c.data?.aliases?.localAlias  ?? null;
+  const remoteAlias = c.data?.aliases?.remoteAlias ?? null;
+  const outIdx      = outputIndexFromScid(realScid);
+
+  return {
+    channelId:   c.channelId,
+    nodeId:      c.nodeId,                              // peer
+    state:       c.state,
+    capacitySat: Number((localMsat + remoteMsat) / 1000n),
+    localSat:    Number(localMsat  / 1000n),
+    remoteSat:   Number(remoteMsat / 1000n),
+    scid: { real: realScid, localAlias, remoteAlias },
+    fundingTxId: fundingTxIdFromChannelId(c.channelId, outIdx),
+  };
+}
+
 // ── in-memory cache ─────────────────────────────────────────────────────────
 const cache = new Map();
 async function cached(key, ttl, fn) {
@@ -47,7 +90,10 @@ app.get('/api/info', async (_req, res) => {
 
 app.get('/api/channels', async (_req, res) => {
   try {
-    const data = await cached('channels', config.cacheTtl, () => eclair('channels'));
+    const data = await cached('channels', config.cacheTtl, async () => {
+      const raw = await eclair('channels');
+      return raw.map(normalizeChannel);
+    });
     res.json(data);
   } catch (e) { res.status(502).json({ error: e.message }); }
 });
@@ -114,18 +160,9 @@ app.get('/api/recent/activity', async (_req, res) => {
   try {
     const data = await cached('recent:activity', config.cacheTtl, async () => {
       const channels = await eclair('channels');
-      const items = [];
-      for (const c of channels) {
-        if (['CLOSING', 'CLOSED', 'NEGOTIATING'].includes(c.state)) {
-          items.push({
-            channelId: c.channelId,
-            nodeId: c.nodeId,
-            state: c.state,
-            fundingTxId: c.data?.commitments?.active?.[0]?.fundingTx?.txId
-              || c.data?.commitments?.params?.channelFlags?.fundingTxId,
-          });
-        }
-      }
+      const items = channels
+        .filter(c => ['CLOSING', 'CLOSED', 'NEGOTIATING'].includes(c.state))
+        .map(normalizeChannel);
       return { closing: items.slice(0, 20) };
     });
     res.json(data);

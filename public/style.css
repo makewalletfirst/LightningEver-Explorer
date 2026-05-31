@@ -251,6 +251,45 @@ a:hover { text-decoration: underline; }
 }
 .footer .muted { color: var(--text-dim); }
 
+/* ── copy button (inline clipboard / check icons) ─────── */
+.copy-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px;
+  margin-left: 6px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  vertical-align: -3px;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+.copy-btn:hover {
+  color: var(--cyan);
+  background: rgba(27, 216, 244, 0.08);
+  border-color: rgba(27, 216, 244, 0.35);
+}
+.copy-btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+.copy-btn .ic-ok   { display: none; }
+.copy-btn .ic-copy { display: block; }
+.copy-btn.copied {
+  color: var(--green);
+  background: rgba(46, 204, 113, 0.12);
+  border-color: rgba(46, 204, 113, 0.4);
+}
+.copy-btn.copied .ic-ok   { display: block; }
+.copy-btn.copied .ic-copy { display: none; }
+.copy-btn.copy-fail { color: var(--red); border-color: rgba(255, 56, 56, 0.4); }
+
+/* SCID origin hints */
+.hex-short.scid-real   { color: var(--cyan); }
+.hex-short.scid-alias  { color: var(--text-mute); font-style: italic; }
+.hex-short.scid-remote { color: var(--text-dim); font-style: italic; }
+
 /* ────────────────────────────────────────────────────────────
    Mobile responsive — fix navbar / hero / container squeeze
    on phones (the navbar items were overflowing on <720px).
