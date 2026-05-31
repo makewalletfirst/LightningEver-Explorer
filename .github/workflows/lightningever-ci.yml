@@ -1,4 +1,4 @@
-# LightningEver Explorer — CI on every push / PR to 260530 or main.
+# LightningEver Explorer — CI on every push / PR to 260530 or main. 
 #
 # The Explorer is a tiny Express app with a vanilla HTML/CSS/JS
 # frontend, so CI is mostly: install prod deps, syntax-check the
