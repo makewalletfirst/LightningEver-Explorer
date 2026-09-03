@@ -1,0 +1,8 @@
+node_modules/
+ecosystem.config.js
+*.log
+.npm/
+.pm2-config
+.env
+.env.*
+!.env.example
